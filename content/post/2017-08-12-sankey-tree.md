@@ -7,7 +7,7 @@ date: 2017-08-12T12:56:18-06:00
 
 d3 provides a helpful suite of layouts (cluster, tree, treemap, pack, and partition) for visualizing tree networks or hierarchies. In addition, we have the d3-sankey plugin for a Sankey diagram as another mechanism for presenting tree data. Approaching the layout decision as a mutually exclusive proposition means that we lose many of the benefits from alternative layouts. However, incorporating our favorite features from more than one layout can provide us with a more effective means of interactive visualization of the very common tree data structure. Let’s explore the specific combination of d3.tree() with d3-sankey.
 
-### d3.tree()
+## d3.tree()
 
 In 1981 Edward Reingold and John Tilford published
 
@@ -19,7 +19,7 @@ imagehere
 
 If we look closely, we can see two potential shortcomings. All nodes are assumed to be the same size, and the links do not reveal size.
 
-### d3.sankey()
+## d3.sankey()
 
 In contrast, d3-sankey helps overcome the two shortcomings of d3.tree() mentioned above. In the next example, we use the same data in a Sankey diagram. We can see that node sizes are no longer uniform and links reveal size.
 
@@ -27,7 +27,7 @@ imagehere
 
 So we “solved” the d3.tree() shortcomings, but when we represent as a Sankey diagram, I think we lose the fact that the underlying data is a tree. This “loss of insight” becomes more obvious when we try to think of ways to collapse a Sankey diagram.
 
-### sankeytree
+## sankeytree
 
 Let’s explore how we might blend d3-sankey with d3.tree() and call our concoction a sankeytree.  We can start with d3.tree() and then draw our nodes and links to be Sankey-like with height proportional to size. Displayr has helped us here with their open source R htmlwidget rhtmlSankeyTree. Below is an example.
 
@@ -37,12 +37,12 @@ While not perfect, the height of the flow from parent to child now indicates siz
 
 imagehere
 
-### Using sankeytree with Recursive Partitioning
+## Using sankeytree with Recursive Partitioning
 
 Decision tree learning results in tree structures that offer a more “real-life” opportunity for sankeytree. We can quickly explore a very basic recursive partitioning classification on the Titanic data that we have used throughout the post. To do it with no coding, we’ll do it in Displayr (live example).
 
 imagehere
 
-### Next Steps
+## Next Steps
 
 Interactivity improves the experience and intuition with sankeytree, but the wasted space bothers me. In future posts in the series, we will explore more combinations of sankey features with d3 layouts and extensions to eliminate the wasted space and improve the user experience.
