@@ -148,6 +148,10 @@ code {
   background: #e5e5e5;
 }
 
+.article-content img {
+  width: 100%;
+}
+
 .highlight {
   border-radius: 3px;
   position: relative;
