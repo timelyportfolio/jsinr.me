@@ -152,6 +152,13 @@ code {
   width: 100%;
 }
 
+.blockquote-type1 {
+  border-left: #c5c5c5 solid 4px;
+  padding-left: 10px;
+  font-style: italic;
+  font-size: 80%;
+}
+
 .highlight {
   border-radius: 3px;
   position: relative;
