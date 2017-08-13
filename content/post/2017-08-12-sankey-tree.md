@@ -3,7 +3,7 @@ title: "Visualizing Trees | Sankey + Tree"
 date: 2017-08-12T12:56:18-06:00
 ---
 
-> This post is courtesy of [Displayr](https://displayr.com) who have generously offered to sponsor a series of independently authored posts about interactive visualization with R and JavaScript. Thank you so much [Displayr](https://displayr.com) for this opportunity.
+> This post is courtesy of [Displayr](http://displayr.com) who have generously offered to sponsor a series of independently authored posts about interactive visualization with R and JavaScript. Thank you so much [Displayr](http://displayr.com) for this opportunity.
 
 [d3](https://d3js.org) provides a helpful suite of [layouts](https://github.com/d3/d3-hierarchy#cluster) (cluster, tree, treemap, pack, and partition) for visualizing tree networks or hierarchies. In addition, we have the [d3-sankey](https://github.com/d3/d3-sankey) plugin for a [Sankey diagram](https://en.wikipedia.org/wiki/Sankey_diagram) as another mechanism for presenting tree data. Approaching the layout decision as a mutually exclusive proposition means that we lose many of the benefits from alternative layouts. However, incorporating our favorite features from more than one layout can provide us with a more effective means of interactive visualization of the very common tree data structure. Let’s explore the specific combination of [d3.tree()](https://github.com/d3/d3-hierarchy#tree) with [d3-sankey](https://github.com/d3/d3-sankey).
 
@@ -13,7 +13,7 @@ In 1981 [Edward Reingold](http://reingold.co/) and John Tilford published
 
 >Reingold, Edward M., and John S. Tilford. “Tidier drawings of trees.” IEEE Transactions on Software Engineering 2 (1981): 223–228.
 
-which gives us the Reingold-Tilford algorithm, the basis of [d3.tree()](https://github.com/d3/d3-hierarchy#tree). Here is a quick unadorned example of the output of [d3.tree()](https://github.com/d3/d3-hierarchy#tree) with the R dataset Titanic using networkD3 diagonalNetwork() for convenience.
+which gives us the Reingold-Tilford algorithm, the basis of [d3.tree()](https://github.com/d3/d3-hierarchy#tree). Here is a quick unadorned example of the output of [d3.tree()](https://github.com/d3/d3-hierarchy#tree) with the R dataset Titanic using networkD3 [diagonalNetwork()](https://christophergandrud.github.io/networkD3/#radial) for convenience.
 
 [![d3.tree() Titanic with networkD3 diagonalNetwork()](images/sankeytree_displayr_d3tree.png)](https://app.displayr.com/Dashboard?id=90646047-bce8-48cf-9a7a-24a36b04cb53)
 
@@ -29,7 +29,7 @@ So we “solved” the [d3.tree()](https://github.com/d3/d3-hierarchy#tree) shor
 
 ## sankeytree
 
-Let’s explore how we might blend [d3-sankey](https://github.com/d3/d3-sankey) with [d3.tree()](https://github.com/d3/d3-hierarchy#tree) and call our concoction a sankeytree.  We can start with [d3.tree()](https://github.com/d3/d3-hierarchy#tree) and then draw our nodes and links to be Sankey-like with height proportional to size. [Displayr](https://displayr.com) has helped us here with their open source R htmlwidget [rhtmlSankeyTree](https://github.com/Displayr/rhtmlSankeyTree). Below is an [example](https://bl.ocks.org/timelyportfolio/34296462d01cc80915d1f01431723763).
+Let’s explore how we might blend [d3-sankey](https://github.com/d3/d3-sankey) with [d3.tree()](https://github.com/d3/d3-hierarchy#tree) and call our concoction a sankeytree.  We can start with [d3.tree()](https://github.com/d3/d3-hierarchy#tree) and then draw our nodes and links to be Sankey-like with height proportional to size. [Displayr](http://displayr.com) has helped us here with their open source R htmlwidget [rhtmlSankeyTree](https://github.com/Displayr/rhtmlSankeyTree). Below is an [example](https://bl.ocks.org/timelyportfolio/34296462d01cc80915d1f01431723763).
 
 [![sankeytree on Titanic](images/sankeytree_sankeytree_titanic.png)](https://bl.ocks.org/timelyportfolio/34296462d01cc80915d1f01431723763)
 
