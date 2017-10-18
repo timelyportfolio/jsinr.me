@@ -2,7 +2,7 @@ baseurl = "/"
 languageCode = "en-us"
 title = "JavaScript in R"
 theme = "hugo-lithium-theme"
-googleAnalytics = ""
+googleAnalytics = "UA-96119852-2"
 disqusShortname = ""
 ignoreFiles = ["\\.Rmd$", "\\.Rmarkdown$", "_files$", "_cache$"]
 
