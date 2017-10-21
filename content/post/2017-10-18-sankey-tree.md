@@ -5,6 +5,10 @@ date: 2017-10-18T12:00:00-06:00
 
 <blockquote class="blockquote-type1">This post is courtesy of <a href="http://displayr.com")>Displayr</a> who have generously offered to sponsor a series of independently authored posts about interactive visualization with R and JavaScript. Thank you so much <a href="http://displayr.com")>Displayr</a> for this opportunity.</blockquote>
 
+<span style="font-size:0.75em;">
+crossposted at <a href="https://buildingwidgets.com/blog">buildingwidgets</a> and <a href="https://medium.com/@timelyportfolio">Medium</a>
+</span>
+
 [d3](https://d3js.org) provides a helpful suite of [layouts](https://github.com/d3/d3-hierarchy#cluster) (cluster, tree, treemap, pack, and partition) for visualizing tree networks or hierarchies. In addition, we have the [d3-sankey](https://github.com/d3/d3-sankey) plugin for a [Sankey diagram](https://en.wikipedia.org/wiki/Sankey_diagram) as another mechanism for presenting tree data. Approaching the layout decision as a mutually exclusive proposition means that we lose many of the benefits from alternative layouts. However, incorporating our favorite features from more than one layout can provide us with a more effective means of interactive visualization of the very common tree data structure. Let’s explore the specific combination of [d3.tree()](https://github.com/d3/d3-hierarchy#tree) with [d3-sankey](https://github.com/d3/d3-sankey).
 
 ## [d3.tree()](https://github.com/d3/d3-hierarchy#tree)
