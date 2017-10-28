@@ -1,6 +1,6 @@
 ---
 title: "Visualizing Trees | Partition + Tree"
-draft: true
+draft: false
 date: 2017-10-28T07:38:10-06:00
 ---
 
