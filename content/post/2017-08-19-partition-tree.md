@@ -1,10 +1,12 @@
 ---
 title: "Visualizing Trees | Partition + Tree"
 draft: true
-date: 2017-08-19T09:38:10-06:00
+date: 2017-10-28T07:38:10-06:00
 ---
 
 <blockquote class="blockquote-type1">This post is courtesy of <a href="http://displayr.com")>Displayr</a> who have generously offered to sponsor a series of independently authored posts about interactive visualization with R and JavaScript. Thank you so much <a href="http://displayr.com")>Displayr</a> for this opportunity.</blockquote>
+
+Before I start on the second post on the series, I wanted to make sure all my R readers knew that the charts in this post are created in R using htmltools. Also, each chart should have a link to reproducible code.
 
 In our first attempt at improving hierarchical visualization, we combined [d3.tree()](https://github.com/d3/d3-hierarchy#tree) with [d3-sankey](https://github.com/d3/d3-sankey). Our [sankeytree concoction](https://app.displayr.com/Dashboard?id=e0c54314-c6c9-4f7a-a7c0-a64f35df897a) allows us to convey size or flow from one level to the next while maintaining some sense of the tree, but the sankeytree still suffers from the universal constant node size (height and width).
 
