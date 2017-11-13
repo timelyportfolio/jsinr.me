@@ -40,4 +40,6 @@ We save some space, but a user might get confused.  For example, the `"Yes"` doe
 
 ## Next
 
-If we like our new creation, then next steps will be to create a more formal d3 layout and then build a reusable chart based on the layout. As mentioned in the post, drawing the links as a path with four points instead of a line with two points will allow us the ability to add even more encoding and information in our links. In the next post, we will explore what we can do with our new powers.
+Iterating through our last three posts demonstrates how creative blending can result in unique representations of tree hierarchies from R or JavaScript.  We'll stop here with our iteration, but we could easily transform this or other visualizations into [`htmlwidgets`](http://htmlwidgets.org) for even easier consumption by R users.
+
+Much of the recent innovation in JavaScript visualization has happened in the newest frameworks, such as [React](https://reactjs.org/) and [Vue](https://vuejs.org/).  We'll see in the next couple of posts how to use these new frameworks in R.
