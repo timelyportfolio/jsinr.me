@@ -29,6 +29,10 @@ code {
   background-color: rgba(0, 0, 0, 0.02);
 }
 
+img {
+  max-width: 100%;
+}
+
 .wrapper {
   overflow: hidden;
   position: relative;
@@ -146,17 +150,6 @@ code {
   overflow: hidden;
   border: none;
   background: #e5e5e5;
-}
-
-.article-content img {
-  width: 100%;
-}
-
-.blockquote-type1 {
-  border-left: #c5c5c5 solid 4px;
-  padding-left: 10px;
-  font-style: italic;
-  font-size: 80%;
 }
 
 .highlight {

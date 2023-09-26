@@ -1,6 +1,6 @@
 ---
-title: "Visualizing Trees | Sankey + Tree"
-date: 2017-10-18T12:00:00-06:00
+date: "2017-10-18T12:00:00-06:00"
+title: Visualizing Trees | Sankey + Tree
 ---
 
 <blockquote class="blockquote-type1">This post is courtesy of <a href="http://displayr.com")>Displayr</a> who have generously offered to sponsor a series of independently authored posts about interactive visualization with R and JavaScript. Thank you so much <a href="http://displayr.com")>Displayr</a> for this opportunity.</blockquote>

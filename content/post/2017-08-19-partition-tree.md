@@ -1,7 +1,7 @@
 ---
-title: "Visualizing Trees | Partition + Tree"
+date: "2017-10-28T07:38:10-06:00"
 draft: false
-date: 2017-10-28T07:38:10-06:00
+title: Visualizing Trees | Partition + Tree
 ---
 
 <blockquote class="blockquote-type1">This post is courtesy of <a href="http://displayr.com")>Displayr</a> who have generously offered to sponsor a series of independently authored posts about interactive visualization with R and JavaScript. Thank you so much <a href="http://displayr.com")>Displayr</a> for this opportunity.</blockquote>

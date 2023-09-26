@@ -1,5 +1,5 @@
 ---
-title: 2023-09-25_gics_tree
+title: GICS® Checkbox Tree in Shiny
 author: Kent Russell
 date: '2023-09-25'
 slug: gics-tree
@@ -14,22 +14,183 @@ tags: []
 <div id="load-libraries" class="section level2">
 <h2>Load Libraries</h2>
 <p>We’ll load the libraries that we plan to use for the conversion.</p>
+<pre class="r"><code>library(readxl)
+library(tidyr)
+library(dplyr)</code></pre>
 </div>
 <div id="download-and-read-gics-excel-structure-file" class="section level2">
 <h2>Download and Read GICS® Excel Structure File</h2>
 <p>Fortunately, the GICS® hierarchy is available for public use on the web in a fairly usable Excel format. In the next bit of code, we will download the Excel file and import the data into a messy <code>data.frame</code>. For this project, we also loaded translations for German, French, Spanish, and Italian, but we will just stick to English for this post.</p>
+<pre class="r"><code># use temp file for this example but save to somewhere more permanent
+#   if you plan to reuse
+gics_file_english &lt;- tempfile(fileext=&quot;.xlsx&quot;)
+
+# download the Excel file with the current GICS structure
+download.file(
+  url = &quot;https://www.spglobal.com/spdji/en/documents/index-policies/2023-gics-structure-english.xlsx&quot;,
+  destfile = gics_file_english,
+  mode = &quot;wb&quot;
+)
+
+# read the Excel file into a data.frame
+gics_english &lt;- readxl::read_xlsx(
+  path = gics_file_english,
+  sheet = &quot;Effective close of Mar 17 2023&quot;,
+  skip = 3
+)</code></pre>
 </div>
 <div id="clean-the-structure" class="section level2">
 <h2>Clean the Structure</h2>
 <p>As is commonly the case with Excel files, we will need to do some cleaning to get the data in a format more suitable for programmatic consumption. The output from this next step will serve as the base for our eventual <code>JSON</code> build.</p>
+<pre class="r"><code>remove_gics_comments &lt;- function(x) {
+  # remove anything in parenthesis, such as New Code, Discontinued, etc.
+  gsub(x = x, pattern = &quot;\\s\\(.*\\)&quot;, replacement = &quot;&quot;)
+}
+
+gics &lt;- gics_english %&gt;%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      everything(),
+      ~!grepl(x=.x, pattern = &quot;(Discontinued)&quot;)
+    )
+  ) %&gt;%
+  # change column names
+  dplyr::select(
+    GICS4 = `...8`,
+    GICS4_Code = `Sub-Industry`,
+    GICS3_Code = `Industry`,
+    GICS2_Code = `Industry Group`,
+    GICS1_Code = Sector
+  ) %&gt;%
+  # convert all codes to double (numeric)
+  dplyr::mutate(
+    dplyr::across(
+      dplyr::contains(&quot;Code&quot;),
+      as.double
+    )
+  ) %&gt;%
+  # remove na rows for GICS4_Code which are description rows
+  dplyr::filter(!is.na(GICS4_Code)) %&gt;%
+  # fill down in each of the Code columns to help us build hierarchy
+  tidyr::fill(
+    GICS3_Code,
+    .direction = &quot;down&quot;
+  ) %&gt;%
+  tidyr::fill(
+    GICS2_Code,
+    .direction = &quot;down&quot;
+  ) %&gt;%
+  tidyr::fill(
+    GICS1_Code,
+    .direction = &quot;down&quot;
+  ) %&gt;%
+  # clean
+  dplyr::mutate(GICS4 = remove_gics_comments(GICS4))</code></pre>
 </div>
 <div id="inefficiently-build-each-level" class="section level2">
 <h2>Inefficiently Build Each Level</h2>
 <p>Yes, this most definitely can be done more efficiently without all the repetition. However, I will leave that up to you. For each level 1-4, we will get a lookup table with the code and the name.</p>
+<pre class="r"><code>gics1 &lt;- gics_english %&gt;%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      1:2,
+      ~!grepl(x=.x, pattern = &quot;(Discontinued)&quot;)
+    )
+  ) %&gt;%
+  filter(!is.na(as.double(Sector))) %&gt;%
+  select(GICS1_Code = 1, GICS1_EN = 2) %&gt;%
+  unique() %&gt;%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+
+gics2 &lt;- gics_english %&gt;%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      1:4,
+      ~!grepl(x=.x, pattern = &quot;(Discontinued)&quot;)
+    )
+  ) %&gt;%
+  select(GICS2_Code = 3, GICS2_EN = 4) %&gt;%
+  filter(!is.na(as.double(GICS2_Code))) %&gt;%
+  unique() %&gt;%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+
+gics3 &lt;- gics_english %&gt;%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      1:6,
+      ~!grepl(x=.x, pattern = &quot;(Discontinued)&quot;)
+    )
+  ) %&gt;%
+  select(GICS3_Code = 5, GICS3_EN = 6) %&gt;%
+  filter(!is.na(as.double(GICS3_Code))) %&gt;%
+  unique() %&gt;%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+
+gics4 &lt;- gics_english %&gt;%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      everything(),
+      ~!grepl(x=.x, pattern = &quot;(Discontinued)&quot;)
+    )
+  ) %&gt;%
+  select(GICS4_Code = 7, GICS4_EN = 8) %&gt;%
+  filter(!is.na(as.double(GICS4_Code))) %&gt;%
+  unique() %&gt;%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )</code></pre>
 </div>
 <div id="combine-everything-into-hierarchical-json" class="section level2">
 <h2>Combine Everything into Hierarchical JSON</h2>
 <p><code>shinyTree</code>/<code>jsTree</code> requires a unique <a href="https://www.jstree.com/docs/json/">hierarchical structure</a> different from the <code>d3</code> hierarchy that seems to have become more of a standard. For each node, we need there to be a property <code>text</code> that will be what shows up in the tree.</p>
+<pre class="r"><code>df &lt;- gics  %&gt;%
+  select(-GICS4) %&gt;%
+  {
+    sorted &lt;- sort(colnames(.))
+    select(., all_of(sorted))
+  } %&gt;%
+  mutate(across(everything(),as.character))
+cols &lt;- colnames(df)
+while(length(cols) &gt; 0) {
+  print(cols)
+  lastcol &lt;- tail(cols,1)
+  gicslvl &lt;- gsub(x=lastcol,pattern=&quot;_Code&quot;,replacement=&quot;&quot;)
+  ref &lt;- get(tolower(gicslvl))
+  if(gicslvl != &quot;GICS4&quot;) { # nest levels 1-3
+    nestcols &lt;- colnames(df)[which(!(colnames(df) %in% cols))]
+    df &lt;- nest(df, children := c(code,nestcols))
+  }
+  df &lt;- right_join(df, ref)
+  df &lt;- rename(df, code = !!paste0(gicslvl,&quot;_Code&quot;))
+  # important step which makes the property text from the English name
+  df &lt;- mutate(df, text = df[paste0(gicslvl,&quot;_EN&quot;)][[1]])
+  cols &lt;- head(cols, length(cols) - 1)
+}
+
+gics_json &lt;- jsonlite::toJSON(df, auto_unbox=TRUE)</code></pre>
 </div>
 <div id="shiny-app-with-gics-checkbox-tree" class="section level2">
 <h2>Shiny App with GICS® Checkbox Tree</h2>
