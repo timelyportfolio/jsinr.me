@@ -1,0 +1,66 @@
+---
+title: 2023-09-25_gics_tree
+author: Kent Russell
+date: '2023-09-25'
+slug: gics-tree
+categories: []
+tags: []
+---
+
+<script src="{{< blogdown/postref >}}index_files/header-attrs/header-attrs.js"></script>
+
+
+<p>I consider myself very fortunate to have the opportunity to engage on consulting projects. Recently, one of these projects required an updated <a href="https://www.msci.com/our-solutions/indexes/gics">Global Industry Classification Standard (GICS®)</a> tree in Shiny, which I thought it might be helpful to share the steps from start (Excel file) to finish (interactive hierarchical checkbox tree).</p>
+<div id="load-libraries" class="section level2">
+<h2>Load Libraries</h2>
+<p>We’ll load the libraries that we plan to use for the conversion.</p>
+</div>
+<div id="download-and-read-gics-excel-structure-file" class="section level2">
+<h2>Download and Read GICS® Excel Structure File</h2>
+<p>Fortunately, the GICS® hierarchy is available for public use on the web in a fairly usable Excel format. In the next bit of code, we will download the Excel file and import the data into a messy <code>data.frame</code>. For this project, we also loaded translations for German, French, Spanish, and Italian, but we will just stick to English for this post.</p>
+</div>
+<div id="clean-the-structure" class="section level2">
+<h2>Clean the Structure</h2>
+<p>As is commonly the case with Excel files, we will need to do some cleaning to get the data in a format more suitable for programmatic consumption. The output from this next step will serve as the base for our eventual <code>JSON</code> build.</p>
+</div>
+<div id="inefficiently-build-each-level" class="section level2">
+<h2>Inefficiently Build Each Level</h2>
+<p>Yes, this most definitely can be done more efficiently without all the repetition. However, I will leave that up to you. For each level 1-4, we will get a lookup table with the code and the name.</p>
+</div>
+<div id="combine-everything-into-hierarchical-json" class="section level2">
+<h2>Combine Everything into Hierarchical JSON</h2>
+<p><code>shinyTree</code>/<code>jsTree</code> requires a unique <a href="https://www.jstree.com/docs/json/">hierarchical structure</a> different from the <code>d3</code> hierarchy that seems to have become more of a standard. For each node, we need there to be a property <code>text</code> that will be what shows up in the tree.</p>
+</div>
+<div id="shiny-app-with-gics-checkbox-tree" class="section level2">
+<h2>Shiny App with GICS® Checkbox Tree</h2>
+<pre class="r"><code>library(shiny)
+# use a forked and updated shinyTree with some additional features
+#remotes::install_github(&quot;timelyportfolio/shinyTree&quot;)
+library(shinyTree)
+
+ui &lt;- shinyTree::shinyTree(
+  &quot;gicstree&quot;,
+  checkbox = TRUE,
+  theme = &quot;proton&quot;,
+  themeIcons = FALSE,
+  themeDots = FALSE
+)
+
+server &lt;- function(input, output, session) {
+  shinyTree::updateTree(
+    session = session,
+    treeId = &quot;gicstree&quot;,
+    data = unclass(gics_json)
+  )
+  
+  observeEvent(shinyTree::get_selected_nodes(input$gicstree), {
+    print(shinyTree::get_selected_nodes(input$gicstree))
+  })
+}
+
+shinyApp(ui = ui, server = server)</code></pre>
+<div class="float">
+<img src="images/gics_checkbox_tree_shiny_app.png" alt="simple Shiny app with GICS tree" />
+<div class="figcaption">simple Shiny app with GICS tree</div>
+</div>
+</div>

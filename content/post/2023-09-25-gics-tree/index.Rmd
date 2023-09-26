@@ -1,0 +1,239 @@
+---
+title: 2023-09-25_gics_tree
+author: Kent Russell
+date: '2023-09-25'
+slug: gics-tree
+categories: []
+tags: []
+---
+
+I consider myself very fortunate to have the opportunity to engage on consulting projects.  Recently, one of these projects required an updated [Global Industry Classification Standard (GICS®)](https://www.msci.com/our-solutions/indexes/gics) tree in Shiny, which I thought it might be helpful to share the steps from start (Excel file) to finish (interactive hierarchical checkbox tree).
+
+## Load Libraries
+
+We'll load the libraries that we plan to use for the conversion.
+
+```{r results='hide',message=FALSE, warning=FALSE, include=FALSE}
+library(readxl)
+library(tidyr)
+library(dplyr)
+```
+
+## Download and Read GICS® Excel Structure File
+
+Fortunately, the GICS® hierarchy is available for public use on the web in a fairly usable Excel format. In the next bit of code, we will download the Excel file and import the data into a messy `data.frame`.  For this project, we also loaded translations for German, French, Spanish, and Italian, but we will just stick to English for this post.
+
+```{r results='hide', message=FALSE, warning=FALSE, include=FALSE}
+# use temp file for this example but save to somewhere more permanent
+#   if you plan to reuse
+gics_file_english <- tempfile(fileext=".xlsx")
+
+# download the Excel file with the current GICS structure
+download.file(
+  url = "https://www.spglobal.com/spdji/en/documents/index-policies/2023-gics-structure-english.xlsx",
+  destfile = gics_file_english,
+  mode = "wb"
+)
+
+# read the Excel file into a data.frame
+gics_english <- readxl::read_xlsx(
+  path = gics_file_english,
+  sheet = "Effective close of Mar 17 2023",
+  skip = 3
+)
+```
+
+## Clean the Structure
+
+As is commonly the case with Excel files, we will need to do some cleaning to get the data in a format more suitable for programmatic consumption.  The output from this next step will serve as the base for our eventual `JSON` build.
+
+```{r results='hide', message=FALSE, warning=FALSE, include=FALSE}
+remove_gics_comments <- function(x) {
+  # remove anything in parenthesis, such as New Code, Discontinued, etc.
+  gsub(x = x, pattern = "\\s\\(.*\\)", replacement = "")
+}
+
+gics <- gics_english %>%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      everything(),
+      ~!grepl(x=.x, pattern = "(Discontinued)")
+    )
+  ) %>%
+  # change column names
+  dplyr::select(
+    GICS4 = `...8`,
+    GICS4_Code = `Sub-Industry`,
+    GICS3_Code = `Industry`,
+    GICS2_Code = `Industry Group`,
+    GICS1_Code = Sector
+  ) %>%
+  # convert all codes to double (numeric)
+  dplyr::mutate(
+    dplyr::across(
+      dplyr::contains("Code"),
+      as.double
+    )
+  ) %>%
+  # remove na rows for GICS4_Code which are description rows
+  dplyr::filter(!is.na(GICS4_Code)) %>%
+  # fill down in each of the Code columns to help us build hierarchy
+  tidyr::fill(
+    GICS3_Code,
+    .direction = "down"
+  ) %>%
+  tidyr::fill(
+    GICS2_Code,
+    .direction = "down"
+  ) %>%
+  tidyr::fill(
+    GICS1_Code,
+    .direction = "down"
+  ) %>%
+  # clean
+  dplyr::mutate(GICS4 = remove_gics_comments(GICS4))
+```
+
+## Inefficiently Build Each Level
+
+Yes, this most definitely can be done more efficiently without all the repetition.  However, I will leave that up to you.  For each level 1-4, we will get a lookup table with the code and the name.
+
+```{r results='hide', message=FALSE, warning=FALSE, include=FALSE}
+gics1 <- gics_english %>%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      1:2,
+      ~!grepl(x=.x, pattern = "(Discontinued)")
+    )
+  ) %>%
+  filter(!is.na(as.double(Sector))) %>%
+  select(GICS1_Code = 1, GICS1_EN = 2) %>%
+  unique() %>%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+
+gics2 <- gics_english %>%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      1:4,
+      ~!grepl(x=.x, pattern = "(Discontinued)")
+    )
+  ) %>%
+  select(GICS2_Code = 3, GICS2_EN = 4) %>%
+  filter(!is.na(as.double(GICS2_Code))) %>%
+  unique() %>%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+
+gics3 <- gics_english %>%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      1:6,
+      ~!grepl(x=.x, pattern = "(Discontinued)")
+    )
+  ) %>%
+  select(GICS3_Code = 5, GICS3_EN = 6) %>%
+  filter(!is.na(as.double(GICS3_Code))) %>%
+  unique() %>%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+
+gics4 <- gics_english %>%
+  # delete discontinued
+  dplyr::filter(
+    dplyr::if_all(
+      everything(),
+      ~!grepl(x=.x, pattern = "(Discontinued)")
+    )
+  ) %>%
+  select(GICS4_Code = 7, GICS4_EN = 8) %>%
+  filter(!is.na(as.double(GICS4_Code))) %>%
+  unique() %>%
+  dplyr::mutate(
+    dplyr::across(
+      2,
+      remove_gics_comments
+    )
+  )
+```
+
+## Combine Everything into Hierarchical JSON
+
+`shinyTree`/`jsTree` requires a unique [hierarchical structure](https://www.jstree.com/docs/json/) different from the `d3` hierarchy that seems to have become more of a standard.  For each node, we need there to be a property `text` that will be what shows up in the tree.
+
+```{r results='hide', message=FALSE, warning=FALSE, include=FALSE}
+df <- gics  %>%
+  select(-GICS4) %>%
+  {
+    sorted <- sort(colnames(.))
+    select(., all_of(sorted))
+  } %>%
+  mutate(across(everything(),as.character))
+cols <- colnames(df)
+while(length(cols) > 0) {
+  print(cols)
+  lastcol <- tail(cols,1)
+  gicslvl <- gsub(x=lastcol,pattern="_Code",replacement="")
+  ref <- get(tolower(gicslvl))
+  if(gicslvl != "GICS4") { # nest levels 1-3
+    nestcols <- colnames(df)[which(!(colnames(df) %in% cols))]
+    df <- nest(df, children := c(code,nestcols))
+  }
+  df <- right_join(df, ref)
+  df <- rename(df, code = !!paste0(gicslvl,"_Code"))
+  # important step which makes the property text from the English name
+  df <- mutate(df, text = df[paste0(gicslvl,"_EN")][[1]])
+  cols <- head(cols, length(cols) - 1)
+}
+
+gics_json <- jsonlite::toJSON(df, auto_unbox=TRUE)
+```
+
+## Shiny App with GICS® Checkbox Tree
+
+```{r eval=FALSE}
+library(shiny)
+# use a forked and updated shinyTree with some additional features
+#remotes::install_github("timelyportfolio/shinyTree")
+library(shinyTree)
+
+ui <- shinyTree::shinyTree(
+  "gicstree",
+  checkbox = TRUE,
+  theme = "proton",
+  themeIcons = FALSE,
+  themeDots = FALSE
+)
+
+server <- function(input, output, session) {
+  shinyTree::updateTree(
+    session = session,
+    treeId = "gicstree",
+    data = unclass(gics_json)
+  )
+  
+  observeEvent(shinyTree::get_selected_nodes(input$gicstree), {
+    print(shinyTree::get_selected_nodes(input$gicstree))
+  })
+}
+
+shinyApp(ui = ui, server = server)
+```
+
+![simple Shiny app with GICS tree](images/gics_checkbox_tree_shiny_app.png)
