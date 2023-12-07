@@ -13,10 +13,10 @@ tags: []
 
 ## Use Cases
 
-I am still trying to think of use cases for this project in Stackblitz. It seems having this readily available for the world to use, share, and embed (with no install) on the web is nice, but with a little imagination I believe we can do even more with this or something like it. For instance, I think we could change to add R script(s) in `public` for them to load in the `webR` virtual filesystem to populate the top left. Maybe we can leverage Bob Rudis' amazing [`pkgtrap`](https://github.com/hrbrmstr/pkgtrap) and brilliant book [Making Portable CLIs With WebR](https://rud.is/books/webr-cli-book/). I would love to hear your ideas.
+I am still trying to think of use cases for this project in Stackblitz. It seems having this readily available for the world to use, share, and embed (with no install) on the web is nice, but with a little imagination I believe we can do even more with this or something like it. For instance, I think we could change to add R script(s) in `public` for them to load in the `webR` virtual filesystem to populate the top left. Maybe we can leverage Bob Rudis' amazing [`pkgtrap`](https://github.com/hrbrmstr/pkgtrap) and brilliant book [Making Portable CLIs With WebR](https://rud.is/books/webr-cli-book/).  Or maybe it is just easier to use the smaller isolated version to learn.  I would love to hear your ideas.
 
 ## Embedded Example
 
 Here is how it looks if we embed the Stackblitz project.
 
-https://stackblitz.com/edit/vitejs-vite-c5r7sn?embed=1&file=README.md
+<iframe src = "https://stackblitz.com/edit/vitejs-vite-c5r7sn?embed=1&file=README.md" style="border:0;margin:0;width:95vw;height:800px;"/>
