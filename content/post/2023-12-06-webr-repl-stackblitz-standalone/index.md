@@ -19,4 +19,4 @@ I am still trying to think of use cases for this project in Stackblitz. It seems
 
 Here is how it looks if we embed the Stackblitz project.
 
-<iframe src = "https://stackblitz.com/edit/vitejs-vite-c5r7sn?embed=1&file=README.md" style="border:0;margin:0;width:95vw;height:800px;"/>
+<iframe src = "https://stackblitz.com/edit/vitejs-vite-c5r7sn?embed=1&file=README.md" style="border:0;margin:0 0 0 -360px;width:95vw;height:800px;"/>
