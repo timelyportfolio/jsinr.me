@@ -1,0 +1,368 @@
+---
+title: reactable Visualization of Allocation
+author: Kent Russell
+date: '2023-12-10'
+slug: reactable-allocation
+categories: []
+tags: []
+---
+
+In my real job as a portfolio manager, asset allocation is very important, so we monitor on a routine basis.  For the weekly update, I used [`reactable`](https://glin.github.io/reactable) with a little custom `d3` JavaScript and SVG to visualize the current allocation compared to investment policy ranges and targets.  Below is a quick example with entirely made up (but I think realistic) numbers.
+
+
+```{r,warning=FALSE,echo=FALSE}
+library(htmltools)
+library(d3r)
+library(reactable)
+
+# example portfolio allocation data frame
+#   in general this will likely come from another source
+alloc <- data.frame(
+  asset = c("Fixed Income","Equity","Real Estate", "Cash"),
+  val = c(1400000000, 750000000, 500000000, 100000000),
+  pct = rep(NA,4), # will calculate later
+  target_pct = c(0.50,0.25,0.20,0.05),
+  target_val = rep(NA,4), # will calculate later
+  diff = rep(NA,4), # will calculate later
+  min = c(0.40,0.20,0.15,0.02),
+  max = c(0.60,0.30,0.25,0.10)
+)
+
+# calculate actual percent
+alloc$pct <- alloc$val / sum(alloc$val)
+
+# calculate target value
+alloc$target_val <- sum(alloc$val) * alloc$target_pct
+
+# calculate actual to target difference
+alloc$diff <- alloc$val - alloc$target_val
+
+rt <- reactable(
+  alloc,
+  pagination = FALSE,
+  sortable = FALSE,
+  compact = TRUE,
+  style = list(fontFamily = "sans-serif"),
+  # turn off borders here
+  borderless = TRUE,
+  rowStyle = list(
+    fontSize = "1.25rem",
+    alignItems = "center",
+    # add back row borders here
+    borderBottom = "1px solid lightgray"
+  ),
+  defaultColDef = colDef(
+    headerStyle = "align-self: flex-end; font-weight: normal; text-align:center;"
+  ),
+  columns = list(
+    asset = colDef(
+      header = JS("function(cellInfo){return `<div></div>`}"),
+      headerStyle = "text-transform:uppercase; align-self:flex-end; font-weight:normal;",
+      html = TRUE,
+      cell = JS("
+function(cellInfo) {
+  return `
+    <div>
+        ${cellInfo.value}
+    </div>
+  `
+}
+      ")
+    ),
+    val = colDef(
+      header = JS("function(cellInfo){return `<div>$</div>`}"),
+      cell = JS("
+function(cellInfo) {
+  if(cellInfo.index === 0) {
+    return `<div>${'$ ' + d3.format(',.0f')(cellInfo.value)}</div>`
+  } else {
+    return `<div>${d3.format(',.0f')(cellInfo.value)}</div>`
+  }
+}
+      "),
+      html = TRUE
+    ),
+    pct = colDef(
+      header = JS("function(cellInfo){return `<div>%</div>`}"),
+      cell = JS("
+function(cellInfo) {
+  if(cellInfo.row.asset === '') return null
+  const height = 50
+  const width = 400
+  const pady = 12
+  const padx = 20
+  return `
+<svg height = ${height} width = ${width}>
+  <rect
+    x='${scalex(cellInfo.row.min)}'
+    y='${pady}'
+    width='${scalex(cellInfo.row.max)-scalex(cellInfo.row.min)}'
+    height='${height-(2*pady)}'
+    fill='#ccc'
+  />
+  <line
+    x1='${scalex(cellInfo.row.target_pct)}'
+    y1='${pady}'
+    x2='${scalex(cellInfo.row.target_pct)}'
+    y2='${height-pady}'
+    stroke='white'
+    stroke-width='2'
+  />
+  <line
+    x1='${scalex(cellInfo.row.pct)}'
+    y1='${pady}'
+    x2='${scalex(cellInfo.row.pct)}'
+    y2='${height-pady}'
+    stroke='#4fb1ff'
+    stroke-width='2'
+  />
+  <text
+    x='${scalex(cellInfo.row.min)-2}'
+    y='${height/2 + 4}'
+    text-anchor='end'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.min)}
+  </text>
+  <text
+    x='${scalex(cellInfo.row.max)+2}'
+    y='${height/2 + 4}'
+    text-anchor='start'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.max)}
+  </text>
+  <text
+    x='${scalex(cellInfo.row.target_pct)}'
+    y='${height - pady/2 + 4}'
+    text-anchor='middle'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.target_pct)}
+  </text>
+  <text
+    x='${scalex(cellInfo.row.pct)}'
+    y='${pady - 4}'
+    text-anchor='middle'
+    fill='#4fb1ff'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.pct)}
+  </text>
+  <text
+    x='${scalex(1) + 20}'
+    y='${height/2 + 20}'
+    text-anchor='end'
+    fill='${cellInfo.row.pct > cellInfo.row.target_pct ? 'black' : 'red'}'
+    style='font-size:20px;'
+  >
+    ${
+      cellInfo.row.pct > cellInfo.row.target_pct ?
+        '+' + d3.format('.1%')(cellInfo.row.pct - cellInfo.row.target_pct) :
+        d3.format('.1%')(cellInfo.row.pct - cellInfo.row.target_pct)
+    }
+  </text>
+</svg>
+  `
+}
+      "),
+      html = TRUE,
+      width = 400
+    ),
+    target_pct = colDef(show = FALSE),
+    target_val = colDef(show = FALSE),
+    diff = colDef(show = FALSE),
+    min = colDef(show = FALSE),
+    max = colDef(show = FALSE)
+  )
+)
+
+tagList(
+  d3r::d3_dep_v7(),
+  tags$script(HTML("const scalex = d3.scaleLinear().range([40,360])")),
+  tags$div(
+    style = "width: 800px; background: white;",
+    rt
+  )
+)
+```
+
+
+### Code
+
+
+```{r,eval=FALSE}
+library(htmltools)
+library(d3r)
+library(reactable)
+
+# example portfolio allocation data frame
+#   in general this will likely come from another source
+alloc <- data.frame(
+  asset = c("Fixed Income","Equity","Real Estate", "Cash"),
+  val = c(1400000000, 750000000, 500000000, 100000000),
+  pct = rep(NA,4), # will calculate later
+  target_pct = c(0.50,0.25,0.20,0.05),
+  target_val = rep(NA,4), # will calculate later
+  diff = rep(NA,4), # will calculate later
+  min = c(0.40,0.20,0.15,0.02),
+  max = c(0.60,0.30,0.25,0.10)
+)
+
+# calculate actual percent
+alloc$pct <- alloc$val / sum(alloc$val)
+
+# calculate target value
+alloc$target_val <- sum(alloc$val) * alloc$target_pct
+
+# calculate actual to target difference
+alloc$diff <- alloc$val - alloc$target_val
+
+rt <- reactable(
+  alloc,
+  pagination = FALSE,
+  sortable = FALSE,
+  compact = TRUE,
+  style = list(fontFamily = "sans-serif"),
+  # turn off borders here
+  borderless = TRUE,
+  rowStyle = list(
+    fontSize = "1.25rem",
+    alignItems = "center",
+    # add back row borders here
+    borderBottom = "1px solid lightgray"
+  ),
+  defaultColDef = colDef(
+    headerStyle = "align-self: flex-end; font-weight: normal; text-align:center;"
+  ),
+  columns = list(
+    asset = colDef(
+      header = JS("function(cellInfo){return `<div></div>`}"),
+      headerStyle = "text-transform:uppercase; align-self:flex-end; font-weight:normal;",
+      html = TRUE,
+      cell = JS("
+function(cellInfo) {
+  return `
+    <div>
+        ${cellInfo.value}
+    </div>
+  `
+}
+      ")
+    ),
+    val = colDef(
+      header = JS("function(cellInfo){return `<div>$</div>`}"),
+      cell = JS("
+function(cellInfo) {
+  if(cellInfo.index === 0) {
+    return `<div>${'$ ' + d3.format(',.0f')(cellInfo.value)}</div>`
+  } else {
+    return `<div>${d3.format(',.0f')(cellInfo.value)}</div>`
+  }
+}
+      "),
+      html = TRUE
+    ),
+    pct = colDef(
+      header = JS("function(cellInfo){return `<div>%</div>`}"),
+      cell = JS("
+function(cellInfo) {
+  if(cellInfo.row.asset === '') return null
+  const height = 50
+  const width = 400
+  const pady = 12
+  const padx = 20
+  return `
+<svg height = ${height} width = ${width}>
+  <rect
+    x='${scalex(cellInfo.row.min)}'
+    y='${pady}'
+    width='${scalex(cellInfo.row.max)-scalex(cellInfo.row.min)}'
+    height='${height-(2*pady)}'
+    fill='#ccc'
+  />
+  <line
+    x1='${scalex(cellInfo.row.target_pct)}'
+    y1='${pady}'
+    x2='${scalex(cellInfo.row.target_pct)}'
+    y2='${height-pady}'
+    stroke='white'
+    stroke-width='2'
+  />
+  <line
+    x1='${scalex(cellInfo.row.pct)}'
+    y1='${pady}'
+    x2='${scalex(cellInfo.row.pct)}'
+    y2='${height-pady}'
+    stroke='#4fb1ff'
+    stroke-width='2'
+  />
+  <text
+    x='${scalex(cellInfo.row.min)-2}'
+    y='${height/2 + 4}'
+    text-anchor='end'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.min)}
+  </text>
+  <text
+    x='${scalex(cellInfo.row.max)+2}'
+    y='${height/2 + 4}'
+    text-anchor='start'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.max)}
+  </text>
+  <text
+    x='${scalex(cellInfo.row.target_pct)}'
+    y='${height - pady/2 + 4}'
+    text-anchor='middle'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.target_pct)}
+  </text>
+  <text
+    x='${scalex(cellInfo.row.pct)}'
+    y='${pady - 4}'
+    text-anchor='middle'
+    fill='#4fb1ff'
+    style='font-size:11px;'
+  >
+    ${d3.format('.0%')(cellInfo.row.pct)}
+  </text>
+  <text
+    x='${scalex(1) + 20}'
+    y='${height/2 + 20}'
+    text-anchor='end'
+    fill='${cellInfo.row.pct > cellInfo.row.target_pct ? 'black' : 'red'}'
+    style='font-size:20px;'
+  >
+    ${
+      cellInfo.row.pct > cellInfo.row.target_pct ?
+        '+' + d3.format('.1%')(cellInfo.row.pct - cellInfo.row.target_pct) :
+        d3.format('.1%')(cellInfo.row.pct - cellInfo.row.target_pct)
+    }
+  </text>
+</svg>
+  `
+}
+      "),
+      html = TRUE,
+      width = 400
+    ),
+    target_pct = colDef(show = FALSE),
+    target_val = colDef(show = FALSE),
+    diff = colDef(show = FALSE),
+    min = colDef(show = FALSE),
+    max = colDef(show = FALSE)
+  )
+)
+
+browsable(tagList(
+  d3r::d3_dep_v7(),
+  tags$script(HTML("const scalex = d3.scaleLinear().range([40,360])")),
+  tags$div(
+    style = "width: 800px; background: white;",
+    rt
+  )
+))
