@@ -1,0 +1,76 @@
+---
+title: "Selfcontained Freedom on iPad (without Pandoc)"
+author: "Kent Russell"
+date: "2024-01-10"
+slug: "selfcontained-htmlwidgets"
+categories: []
+tags: []
+---
+
+Maybe you are like me.  Sometimes I just need a nudge.  Last week I received a nudge in the form of an email from Mike Stein saying (with the magic words - `selfcontained` and `webR`)
+
+> Any future possibility for the htmlwidgets package to be able to create a self-contained .html file without Pandoc so that users create self-contained htmlwidgets via webR on their mobile devices? Self-contained htmlwidget .html files are a nice format for me to send data (e.g. a reactable table)...
+
+I love the `selfcontained` argument, and actually the entire https://buildingwidgets.com was written by converting `Rmd` to selfcontained html (with the help of Pandoc) and pasting the html contents into the Squarespace editor.  See the modified bit of [code]( https://github.com/timelyportfolio/buildingwidgets/blob/57cd1efe69f91b4d9c2a2aec5d481bff3487fae6/content/post/2015-04-09-week14/index.Rmd#L23-L39).
+
+So off to Github I went inspecting `htmlwidgets` code to see if my initial impression of feasibility was accurate.  Along the way I also found the brilliant Rust tool [`monolith`](https://github.com/Y2Z/monolith) also mentioned in today's drop from Bob Rudis [Hoarding Can Be A Good Thing](https://dailydrop.hrbrmstr.dev/2024/01/10/drop-402-2024-01-10-hoarding-can-be-a-good-thing/).  However, given the need to run in a controlled environment or the iPad, `monolith` would not be a viable option.  I ultimately got a working solution with a tiny bit of a code and a couple regexes so ugly that I am not sure why I am sharing in public.
+
+It works for me locally and in the `webR` [repl](https://webr.r-wasm.org/latest/) / [stackblitz repl](https://stackblitz.com/edit/vitejs-vite-c5r7sn?file=README.md), and Mike says it works for him in the repl on his iPad, so hopefully it will work for you as well.  There is lots of room for improvement with type checking and error handling, so please let me know if you convert it into something more legitimate and production-worthy.  Also, this will likely work with `tagList` if you would like non-widget selfcontained content.  Thanks Mike for the nudge.
+
+
+```r
+save_selfcontained <- function(widget)  {
+  
+  temp_dir <- tempfile()
+  dir.create(temp_dir)
+  temp_file <- file.path(temp_dir,"widget.html")
+  
+  htmlwidgets::saveWidget(widget, file = temp_file, selfcontained = FALSE)
+
+  # read not self-contained html
+  html_text <- readLines(temp_file)
+  
+  # convert <script src=*> to <script>js file contents</script>
+  js_lines <- which(grepl(
+    x = html_text,
+    pattern = '(src=.*js)'
+  ))
+  
+  # convert link[rel=stylesheet] to <style>css file contents</style>
+  css_lines <- which(grepl(
+    x = html_text,
+    pattern = '(href=.*css)'
+  ))
+  
+  # perform self-contained conversion/replacement of JS
+  if(length(js_lines) > 0) {
+    html_text[js_lines] <- lapply(js_lines, function(js_line) {
+      js_file <- sub(x=html_text[js_line], pattern='.*src=[":\'](.*\\.js).*', replacement="\\1")
+      js_content <- paste0(
+        "<script>",
+        paste0(readLines(file.path(temp_dir,js_file)), collapse="\n"),
+        "</script>",
+        collapse="\n"
+      )
+    })
+  }
+  
+  # perform self-contained conversion/replacement of JS
+  if(length(css_lines) > 0) {
+    html_text[css_lines] <- lapply(css_lines, function(css_line) {
+      css_file <- sub(x=html_text[css_line], pattern='.*href=[":\'](.*\\.css).*', replacement="\\1")
+      css_content <- paste0(
+        "<style>",
+        paste0(readLines(file.path(temp_dir,css_file)), collapse="\n"),
+        "</style>",
+        collapse="\n"
+      )
+    })
+  }
+  
+  # save self-contained html
+  write(paste0(html_text,collapse="\n"), file=file.path(temp_dir,"index.html"))
+  
+  return(file.path(temp_dir,"index.html"))
+}
+```
