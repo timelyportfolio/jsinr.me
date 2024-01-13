@@ -242,4 +242,4 @@ server <- function(input, output, session) {
 shinyApp(ui = ui, server = server)
 ```
 
-![simple Shiny app with GICS tree](images/gics_checkbox_tree_shiny_app.png)
+![simple Shiny app with GICS tree](/images/gics_checkbox_tree_shiny_app.png)
