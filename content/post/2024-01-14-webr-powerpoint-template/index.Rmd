@@ -1,0 +1,175 @@
+---
+title: "Nicer Powerpoint with officer and webR"
+author: "Kent Russell"
+date: "2024-01-14"
+slug: "webr-powerpoint-template"
+categories: []
+tags: []
+---
+
+I was a little embarrassed by the poor quality of the Powerpoint created in the last [Powerpoint from Anywhere with officer and webR](https://www.jsinr.me/2024/01/13/webr-powerpoint/), so I thought I would quickly assemble a slightly more aesthetic presentation using one of the Powerpoint templates called Future Forward.  While we are at it, I figured I would also cover a topic that I plan to pursue as a series covering what we have in `R` but not in JavaScript. One very good example of missing functionality in JavaScript is survival analysis.  I'll let the code do most of the talking.  I have embedded a pdf version below, and the actual Powerpoint presentation and modified template are in the [Github repo]().
+
+*Even though survival analysis does not exist in JavaScript, I did discover that Powerpoint creation is available in JavaScript with the very nice package [PptxGenJS](https://github.com/gitbrent/PptxGenJS)*
+
+```{r eval = FALSE}
+library(officer)
+library(ggplot2)
+library(ggsurvfit)
+library(eha)
+
+ppt <- read_pptx("future_forward.pptx")
+#View(layout_properties(ppt))
+
+ppt <- add_slide(ppt, layout = "Title Slide", master = "DividendVTI")
+ppt <- ph_with(
+  ppt,
+  "Better Designed Powerpoint with Template",
+  location = ph_location_label("Title 1")
+)
+ppt <- ph_with(
+  ppt,
+  "using the R package officer and Powerpoint Future Forward template",
+  location = ph_location_label("Subtitle 2")
+)
+
+ggp1 <- plot_instr({
+  print(
+    ggplot(mtcars, aes(x=hp,y=mpg)) + 
+    geom_point()
+  )
+})
+
+ppt <- add_slide(ppt, layout = "Comparison", master = "DividendVTI")
+ppt <- ph_with(
+  ppt,
+  "What R Has That JS Doesn't",
+  location = ph_location_label("Title 1")
+)
+ppt <- ph_with(
+  ppt,
+  "Survival Analysis",
+  location = ph_location_label("Text Placeholder 2")
+)
+ppt <- ph_with(
+  ppt,
+  c(
+    "On a previous project, I had to do Shiny",
+    "to support survival analysis.  Porting",
+    "to JavaScript would be an extremely",
+    "time consuming and difficult exercise.",
+    "",
+    "Now we can access all the R tooling for",
+    "survival analysis in the browser with",
+    "webR."
+  ),
+  location = ph_location_label("Text Placeholder 4")
+)
+
+ppt <- add_slide(ppt, layout = "Content with Caption", master = "DividendVTI")
+ppt <- ph_with(
+  ppt,
+  "survival",
+  location = ph_location_label("Title 1")
+)
+ppt <- ph_with(
+  ppt,
+  c(
+    "using the survival package",
+    "help(plot.survfit)"
+  ),
+  location = ph_location_label("Text Placeholder 3")
+)
+ppt <- ph_with(
+  ppt,
+  plot_instr({
+    leukemia.surv <- survfit(Surv(time, status) ~ x, data = aml) 
+    plot(leukemia.surv, lty = 2:3) 
+    legend(100, .9, c("Maintenance", "No Maintenance"), lty = 2:3) 
+    title("Kaplan-Meier Curves\nfor AML Maintenance Study") 
+  }),
+  location = ph_location_label("Content Placeholder 2")
+)
+
+ppt <- add_slide(ppt, layout = "Content with Caption", master = "DividendVTI")
+ppt <- ph_with(
+  ppt,
+  "ggsurvfit",
+  location = ph_location_label("Title 1")
+)
+ppt <- ph_with(
+  ppt,
+  c(
+    "using the new ggsurvfit package",
+    "https://www.danieldsjoberg.com/ggsurvfit"
+  ),
+  location = ph_location_label("Text Placeholder 3")
+)
+ppt <- ph_with(
+  ppt,
+  plot_instr({
+    print(
+      survfit2(Surv(time, status) ~ surg, data = df_colon) |>
+        ggsurvfit() +
+        add_confidence_interval() +
+        scale_ggsurvfit()
+    )
+  }),
+  location = ph_location_label("Content Placeholder 2")
+)
+
+ppt <- add_slide(ppt, layout = "Content with Caption", master = "DividendVTI")
+ppt <- ph_with(
+  ppt,
+  "eha",
+  location = ph_location_label("Title 1")
+)
+ppt <- ph_with(
+  ppt,
+  "using the eha package",
+  location = ph_location_label("Text Placeholder 3")
+)
+ppt <- ph_with(
+  ppt,
+  plot_instr({
+    fit.cr <- coxreg(Surv(enter, exit, event) ~ sex, data = oldmort)
+    fit.w <- phreg(Surv(enter, exit, event) ~ sex, data = oldmort)
+    compHaz(fit.cr, fit.w)
+  }),
+  location = ph_location_label("Content Placeholder 2")
+)
+
+ppt <- add_slide(ppt, layout = "Two Content With Code", master = "DividendVTI")
+ppt <- ph_with(
+  ppt,
+  "Plot with Code",
+  location = ph_location_label("Title 1")
+)
+ppt <- ph_with(
+  ppt,
+  c(
+    "ggplot(mtcars, aes(x=hp,y=mpg)) +",
+    "  geom_point() +",
+    "  theme_void()"
+  ),
+  location = ph_location_label("Content Placeholder 2")
+)
+ppt <- ph_with(
+  ppt,
+  ggp1,
+  location = ph_location_label("Content Placeholder 3")
+)
+ppt <- ph_with(
+  ppt,
+  "Code usually isn't shown in my work Powerpoint, but we can modify the template to support.",
+  location = ph_location_label("Text Placeholder 10")
+)
+
+print(ppt, target="survival_webr.pptx")
+```
+
+<embed
+	src="document.pdf"
+	type="application/pdf"
+	width="100%"
+	height="100%"
+/>

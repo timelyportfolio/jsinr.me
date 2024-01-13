@@ -11,7 +11,9 @@ The last [nudge](https://www.jsinr.me/2024/01/10/selfcontained-htmlwidgets/) cre
 
 I still find it hard to believe, but almost every R package is now available in `webR` including `officer`.  `webR` + `officer` means that we can create Powerpoint (and Word) anywhere we have a modern browser including an iPad and iPhone.  Below is a quick example of some code that we can run in the `webR` [repl](https://webr.r-wasm.org/latest/) to create a poorly designed but functional Powerpoint document supplemented with all the power of `R`.  In the screenshot below, we can see that our Powerpoint is created and is available with "Download File" in the repl.
 
-> Please know that with a little work and a well designed template quite professional slides can be achieved.
+>>> Please know that with a little work and a well designed template quite professional slides can be achieved.
+
+In response to a question from [Jelle Geertsma \@rdatasculptor](https://twitter.com/rdatasculptor), here is a [Stackblitz example](https://stackblitz.com/edit/vitejs-vite-bkrxbm?file=main.js) how we can do the same thing in a web page. 
 
 ![webR and officer creating Powerpoint in repl](/images/webr_powerpoint.png)
 
