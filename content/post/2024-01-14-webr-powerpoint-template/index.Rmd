@@ -7,17 +7,24 @@ categories: []
 tags: []
 ---
 
-I was a little embarrassed by the poor quality of the Powerpoint created in the last [Powerpoint from Anywhere with officer and webR](https://www.jsinr.me/2024/01/13/webr-powerpoint/), so I thought I would quickly assemble a slightly more aesthetic presentation using one of the Powerpoint templates called Future Forward.  While we are at it, I figured I would also cover a topic that I plan to pursue as a series covering what we have in `R` but not in JavaScript. One very good example of missing functionality in JavaScript is survival analysis.  I'll let the code do most of the talking.  I have embedded a pdf version below, and the actual Powerpoint presentation and modified template are in the [Github repo]().
+I was a little embarrassed by the poor quality of the Powerpoint created in the last [Powerpoint from Anywhere with officer and webR](https://www.jsinr.me/2024/01/13/webr-powerpoint/), so I thought I would quickly assemble a slightly more aesthetic presentation using one of the Powerpoint templates called Future Forward.  While we are at it, I figured I would also cover a topic that I plan to pursue as a series covering what we have in `R` but not in JavaScript. One very good example of missing functionality in JavaScript is survival analysis.  I'll let the code do most of the talking.  I have embedded a pdf version below, and the actual Powerpoint presentation and modified template are in the [Github repo](https://github.com/timelyportfolio/jsinr.me/tree/master/content/post/2024-01-14-webr-powerpoint-template).  If you are trying to replicate in the webR [repl](https://webr.r-wasm.org/latest/), you will need to upload the template from the Github repo to `/home/web_user/future_forward.pptx`.
 
 *Even though survival analysis does not exist in JavaScript, I did discover that Powerpoint creation is available in JavaScript with the very nice package [PptxGenJS](https://github.com/gitbrent/PptxGenJS)*
 
 ```{r eval = FALSE}
+install.packages(c(
+  "officer",
+  "survival",
+  "ggsurvfit",
+  "eha"
+))
+
 library(officer)
 library(ggplot2)
 library(ggsurvfit)
 library(eha)
 
-ppt <- read_pptx("future_forward.pptx")
+ppt <- read_pptx("/home/web_user/future_forward.pptx")
 #View(layout_properties(ppt))
 
 ppt <- add_slide(ppt, layout = "Title Slide", master = "DividendVTI")
@@ -82,7 +89,7 @@ ppt <- ph_with(
 ppt <- ph_with(
   ppt,
   plot_instr({
-    leukemia.surv <- survfit(Surv(time, status) ~ x, data = aml) 
+    leukemia.surv <- survfit(Surv(time, status) ~ x, data = survival::aml) 
     plot(leukemia.surv, lty = 2:3) 
     legend(100, .9, c("Maintenance", "No Maintenance"), lty = 2:3) 
     title("Kaplan-Meier Curves\nfor AML Maintenance Study") 
@@ -108,7 +115,7 @@ ppt <- ph_with(
   ppt,
   plot_instr({
     print(
-      survfit2(Surv(time, status) ~ surg, data = df_colon) |>
+      survfit2(Surv(time, status) ~ surg, data = ggsurvfit::df_colon) |>
         ggsurvfit() +
         add_confidence_interval() +
         scale_ggsurvfit()
@@ -131,8 +138,8 @@ ppt <- ph_with(
 ppt <- ph_with(
   ppt,
   plot_instr({
-    fit.cr <- coxreg(Surv(enter, exit, event) ~ sex, data = oldmort)
-    fit.w <- phreg(Surv(enter, exit, event) ~ sex, data = oldmort)
+    fit.cr <- coxreg(Surv(enter, exit, event) ~ sex, data = eha::oldmort)
+    fit.w <- phreg(Surv(enter, exit, event) ~ sex, data = eha::oldmort)
     compHaz(fit.cr, fit.w)
   }),
   location = ph_location_label("Content Placeholder 2")
@@ -164,12 +171,12 @@ ppt <- ph_with(
   location = ph_location_label("Text Placeholder 10")
 )
 
-print(ppt, target="survival_webr.pptx")
+print(ppt, target="/home/web_user/survival_webr.pptx")
 ```
 
 <embed
-	src="document.pdf"
+	src="https://cdn.jsdelivr.net/gh/timelyportfolio/jsinr.me@master/content/post/2024-01-14-webr-powerpoint-template/survival_webr.pdf"
 	type="application/pdf"
 	width="100%"
-	height="100%"
+	height="800px"
 />
